@@ -74,6 +74,20 @@ fn extract_robot_from_line(line: &str) -> Option<Robot> {
     Some(robot)
 }
 
+fn print_robots(robots: Vec<Robot>) {
+    for y in 0..BATHROOM_HEIGHT {
+        for x in 0..BATHROOM_WIDTH {
+            let robot_count = robots.into_iter().fold(0, |sum, robot| {
+                if robot.position.x == x && robot.position.y == y {
+                    sum + 1
+                } else {
+                    sum
+                }
+            });
+        }
+    }
+}
+
 fn main() {
     let contents = fs::read_to_string("./input").expect("Should have been able to read the file");
     println!("Parsed input:\n{contents}");
