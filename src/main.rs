@@ -53,6 +53,10 @@ fn tick_robot_system(robot: Robot) -> Robot {
     }
 }
 
+fn update_robots(robots: Vec<Robot>) -> Vec<Robot> {
+    robots.into_iter().map(|robot| tick_robot_system(robot)).collect()
+}
+
 fn extract_robot_from_line(line: &str) -> Option<Robot> {
     if line == "" {
         return None;
@@ -76,5 +80,14 @@ fn main() {
 
     let lines = contents.split("\n");
 
-    lines.into_iter().for_each(|line| {});
+    let mut robots: Vec<Robot> = Vec::new();
+
+    lines.into_iter().for_each(|line| {
+        match extract_robot_from_line(line) {
+            Some(robot) => robots.push(robot),
+            None => {}
+        }
+    });
+
+    let new_robots = update_robots(robots);
 }
