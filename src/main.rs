@@ -1,4 +1,3 @@
-use std::env;
 use std::fs;
 
 const BATHROOM_WIDTH: i32 = 101;
@@ -54,7 +53,10 @@ fn tick_robot_system(robot: &Robot) -> Robot {
 }
 
 fn update_robots(robots: &Vec<Robot>) -> Vec<Robot> {
-    robots.into_iter().map(|robot| tick_robot_system(robot)).collect()
+    robots
+        .into_iter()
+        .map(|robot| tick_robot_system(robot))
+        .collect()
 }
 
 fn extract_robot_from_line(line: &str) -> Option<Robot> {
@@ -94,6 +96,19 @@ fn print_robots(robots: &Vec<Robot>) {
     }
 }
 
+fn get_robot_count_in_range(min: Vec2, max: Vec2, robots: &Vec<Robot>) -> i32 {
+    robots.clone().into_iter().fold(0, |sum, robot| {
+        let in_horizontal_range = min.x <= robot.position.x && robot.position.x >= max.x;
+        let in_vertical_range = min.y <= robot.position.y && robot.position.y >= max.y;
+
+        if in_horizontal_range && in_vertical_range {
+            sum + 1
+        } else {
+            sum
+        }
+    })
+}
+
 fn main() {
     let contents = fs::read_to_string("./input").expect("Should have been able to read the file");
     println!("Parsed input:\n{contents}");
@@ -102,20 +117,24 @@ fn main() {
 
     let mut robots: Vec<Robot> = Vec::new();
 
-    lines.into_iter().for_each(|line| {
-        match extract_robot_from_line(line) {
+    lines
+        .into_iter()
+        .for_each(|line| match extract_robot_from_line(line) {
             Some(robot) => robots.push(robot),
             None => {}
-        }
-    });
-
-    print_robots(&robots);
-
-    let mut new_robots = robots;
+        });
 
     for i in 0..100 {
-        new_robots = update_robots(&new_robots);
+        robots = update_robots(&robots);
     }
 
-    print_robots(&new_robots);
+    let q0 = get_robot_count_in_range(Vec2 { x: 0, y: 0 }, Vec2 {x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2}, &robots);
+    let q1 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: 0 }, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT  / 2}, &robots);
+    let q2 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2 }, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT / 2}, &robots);
+    let q3 = get_robot_count_in_range(Vec2 { x: 0, y: BATHROOM_HEIGHT / 2 }, Vec2 {x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT}, &robots);
+
+    let safety_number = q0 * q1 * q2 * q3;
+
+    // print_robots(&robots);
+    print!("{}", safety_number);
 }
