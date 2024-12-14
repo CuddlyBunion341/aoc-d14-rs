@@ -40,7 +40,7 @@ fn wrap_value(a: i32, b: i32, threshold: i32) -> i32 {
     c
 }
 
-fn tick_robot_system(robot: Robot) -> Robot {
+fn tick_robot_system(robot: &Robot) -> Robot {
     Robot {
         position: Vec2 {
             x: wrap_value(robot.position.x, robot.velocity.x, BATHROOM_WIDTH),
@@ -53,7 +53,7 @@ fn tick_robot_system(robot: Robot) -> Robot {
     }
 }
 
-fn update_robots(robots: Vec<Robot>) -> Vec<Robot> {
+fn update_robots(robots: &Vec<Robot>) -> Vec<Robot> {
     robots.into_iter().map(|robot| tick_robot_system(robot)).collect()
 }
 
@@ -74,7 +74,7 @@ fn extract_robot_from_line(line: &str) -> Option<Robot> {
     Some(robot)
 }
 
-fn print_robots(robots: Vec<Robot>) {
+fn print_robots(robots: &Vec<Robot>) {
     for y in 0..BATHROOM_HEIGHT {
         for x in 0..BATHROOM_WIDTH {
             let robot_count = robots.clone().into_iter().fold(0, |sum, robot| {
@@ -109,7 +109,13 @@ fn main() {
         }
     });
 
-    print_robots(robots);
+    print_robots(&robots);
 
-    // let new_robots = update_robots(robots);
+    let mut new_robots = robots;
+
+    for i in 0..100 {
+        new_robots = update_robots(&new_robots);
+    }
+
+    print_robots(&new_robots);
 }
