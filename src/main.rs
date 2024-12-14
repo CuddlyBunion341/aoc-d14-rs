@@ -1,6 +1,9 @@
 use std::env;
 use std::fs;
 
+const BATHROOM_WIDTH = 101;
+const BATHROOM_HEIGHT = 103;
+
 #[derive(Debug)]
 struct Vec2 {
     x: i32,
@@ -28,11 +31,20 @@ fn extract_value(string: &str) -> Vec2 {
     Vec2 { x, y }
 }
 
+fn wrap_value(a: i32, b: i32, threshold: i32) -> i32 {
+    let c = a + b;
+    if c > threshold {
+        return 0;
+    }
+
+    c
+}
+
 fn tick_robot_system(robot: Robot) -> Robot {
     Robot {
         position: Vec2 {
-            x: robot.position.x,
-            y: robot.position.y,
+            x: wrap_value(robot.position.x, robot.velocity.x, BATHROOM_WIDTH),
+            y: wrap_value(robot.position.y, robot.velocity.y, BATHROOM_HEIGHT),
         },
         velocity: Vec2 {
             x: robot.velocity.x,
