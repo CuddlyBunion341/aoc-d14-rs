@@ -1,16 +1,16 @@
 use std::env;
 use std::fs;
 
-const BATHROOM_WIDTH = 101;
-const BATHROOM_HEIGHT = 103;
+const BATHROOM_WIDTH: i32 = 101;
+const BATHROOM_HEIGHT: i32 = 103;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Vec2 {
     x: i32,
     y: i32,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Robot {
     position: Vec2,
     velocity: Vec2,
@@ -77,13 +77,19 @@ fn extract_robot_from_line(line: &str) -> Option<Robot> {
 fn print_robots(robots: Vec<Robot>) {
     for y in 0..BATHROOM_HEIGHT {
         for x in 0..BATHROOM_WIDTH {
-            let robot_count = robots.into_iter().fold(0, |sum, robot| {
+            let robot_count = robots.clone().into_iter().fold(0, |sum, robot| {
                 if robot.position.x == x && robot.position.y == y {
                     sum + 1
                 } else {
                     sum
                 }
             });
+
+            if robot_count == 0 {
+                print!(".");
+            } else {
+                print!("{}", robot_count);
+            }
         }
     }
 }
@@ -103,5 +109,7 @@ fn main() {
         }
     });
 
-    let new_robots = update_robots(robots);
+    print_robots(robots);
+
+    // let new_robots = update_robots(robots);
 }
