@@ -1,12 +1,12 @@
 use core::fmt;
 use std::fs;
 
-// const BATHROOM_WIDTH: i32 = 101;
-// const BATHROOM_HEIGHT: i32 = 103;
+const BATHROOM_WIDTH: i32 = 101;
+const BATHROOM_HEIGHT: i32 = 103;
 
 const INPUT_FILE_PATH: &str = "./input";
-const BATHROOM_WIDTH: i32 = 11;
-const BATHROOM_HEIGHT: i32 = 7;
+// const BATHROOM_WIDTH: i32 = 11;
+// const BATHROOM_HEIGHT: i32 = 7;
 const SIMULATION_DURATION: i32 = 100;
 
 #[derive(Debug, Clone)]
