@@ -1,13 +1,18 @@
+extern crate image;
+
 use core::fmt;
+use image::{Rgb, RgbImage};
 use std::fs;
 
 const BATHROOM_WIDTH: i32 = 101;
 const BATHROOM_HEIGHT: i32 = 103;
 
 const INPUT_FILE_PATH: &str = "./input";
-// const BATHROOM_WIDTH: i32 = 11;
-// const BATHROOM_HEIGHT: i32 = 7;
 const SIMULATION_DURATION: i32 = 100;
+const SKIP_QUADRANTS_CHECK: bool = true;
+
+const GENERATE_IMAGES: bool = false;
+const PRINT_GRID: bool = false;
 
 #[derive(Debug, Clone)]
 struct Vec2 {
@@ -97,7 +102,7 @@ fn extract_robot_from_line(line: &str) -> Option<Robot> {
 }
 
 fn is_between_quadrants(point: &Vec2) -> bool {
-    point.x == BATHROOM_WIDTH / 2 || point.y == BATHROOM_HEIGHT / 2
+    (point.x == BATHROOM_WIDTH / 2 || point.y == BATHROOM_HEIGHT / 2) && !SKIP_QUADRANTS_CHECK
 }
 
 fn print_robot_values(robots: &Vec<Robot>) {
@@ -107,28 +112,60 @@ fn print_robot_values(robots: &Vec<Robot>) {
 }
 
 fn print_robots_grid(robots: &Vec<Robot>) {
+    let mut output = String::new();
     for y in 0..BATHROOM_HEIGHT {
         for x in 0..BATHROOM_WIDTH {
-            if is_between_quadrants(&Vec2 {x,y}) {
-                print!(" ");
+            if is_between_quadrants(&Vec2 { x, y }) {
+                output += " ";
                 continue;
             }
 
-            let robot_count = get_robot_count_in_range(Vec2 {x, y}, Vec2 {x,y}, &robots);
+            let robot_count = get_robot_count_in_range(Vec2 { x, y }, Vec2 { x, y }, &robots);
 
             if robot_count == 0 {
-                print!(".");
+                output += ". ";
             } else {
-                print!("{}", robot_count);
+                output += format!("{}", robot_count).as_str();
             }
         }
-
-        println!("");
+        output += "\n";
     }
+    print!("{}", output);
+}
+
+fn create_image_for_state(step: i32, robots: &Vec<Robot>) {
+    let height: u32 = BATHROOM_HEIGHT.try_into().unwrap();
+    let width: u32 = BATHROOM_WIDTH.try_into().unwrap();
+
+    let mut image = RgbImage::new(height, width);
+    for y in 0..width {
+        for x in 0..height {
+            let robot_count = get_robot_count_in_range(
+                Vec2 {
+                    x: x.try_into().unwrap(),
+                    y: y.try_into().unwrap(),
+                },
+                Vec2 {
+                    x: x.try_into().unwrap(),
+                    y: y.try_into().unwrap(),
+                },
+                &robots,
+            );
+            if robot_count > 0 {
+                image.put_pixel(x, y, Rgb([255, 255, 255]));
+            } else {
+                image.put_pixel(x, y, Rgb([0, 0, 0]));
+            }
+        }
+    }
+
+    let file_name = format!("output/state_{}.png", step);
+
+    image.save(file_name).unwrap();
 }
 
 fn get_robot_count_in_range(min: Vec2, max: Vec2, robots: &Vec<Robot>) -> i32 {
-    robots.clone().into_iter().fold(0, |sum, robot| {
+    robots.into_iter().fold(0, |sum, robot| {
         let in_horizontal_range = min.x <= robot.position.x && robot.position.x <= max.x;
         let in_vertical_range = min.y <= robot.position.y && robot.position.y <= max.y;
 
@@ -143,7 +180,8 @@ fn get_robot_count_in_range(min: Vec2, max: Vec2, robots: &Vec<Robot>) -> i32 {
 }
 
 fn main() {
-    let contents = fs::read_to_string(INPUT_FILE_PATH).expect("Should have been able to read the file");
+    let contents =
+        fs::read_to_string(INPUT_FILE_PATH).expect("Should have been able to read the file");
     println!("Parsed input:\n{contents}");
 
     let lines = contents.split("\n");
@@ -161,24 +199,40 @@ fn main() {
     print_robots_grid(&robots);
 
     for s in 0..SIMULATION_DURATION {
-        robots = update_robots(&robots);
         println!("\nAfter {} seconds:", s + 1);
-        print_robots_grid(&robots);
+
+        robots = update_robots(&robots);
+
+        if GENERATE_IMAGES {
+            create_image_for_state(s + 1, &robots);
+        }
+        if PRINT_GRID {
+            print_robots_grid(&robots);
+        }
     }
 
-    let q0 = get_robot_count_in_range(Vec2 { x: 0, y: 0 }, Vec2 {x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2}, &robots);
-    let q1 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: 0 }, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT  / 2}, &robots);
-    let q2 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2 }, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT}, &robots);
-    let q3 = get_robot_count_in_range(Vec2 { x: 0, y: BATHROOM_HEIGHT / 2 }, Vec2 {x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT}, &robots);
+    let q0 = get_robot_count_in_range(Vec2 { x: 0, y: 0 }, Vec2 { x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2 }, &robots);
+    let q1 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: 0 }, Vec2 { x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT / 2 }, &robots);
+    let q2 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2 }, Vec2 { x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT, }, &robots);
+    let q3 = get_robot_count_in_range(Vec2 { x: 0, y: BATHROOM_HEIGHT / 2 }, Vec2 { x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT }, &robots);
 
     println!("");
     print_robot_values(&robots);
+    print_robots_grid(&robots);
 
-    println!("\nTotal: {} from {}", get_robot_count_in_range(Vec2 {x: 0, y: 0,}, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT}, &robots), robots.len());
+    println!(
+        "\nTotal: {} from {}",
+        get_robot_count_in_range(
+            Vec2 { x: 0, y: 0 },
+            Vec2 { x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT },
+            &robots
+        ),
+        robots.len()
+    );
 
     let safety_number = q0 * q1 * q2 * q3;
 
-    println!("{}, {}, {}, {}", q0,q1,q2,q3);
+    println!("{}, {}, {}, {}", q0, q1, q2, q3);
 
     println!("=> {}", safety_number);
 }
