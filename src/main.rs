@@ -1,13 +1,14 @@
+extern crate image;
+
 use core::fmt;
 use std::{fs, thread, time::Duration};
+use image::{Rgb, RgbImage};
 
 const BATHROOM_WIDTH: i32 = 101;
 const BATHROOM_HEIGHT: i32 = 103;
 
 const INPUT_FILE_PATH: &str = "./input";
-// const BATHROOM_WIDTH: i32 = 11;
-// const BATHROOM_HEIGHT: i32 = 7;
-const SIMULATION_DURATION: i32 = 1000;
+const SIMULATION_DURATION: i32 = 10000;
 
 #[derive(Debug, Clone)]
 struct Vec2 {
@@ -129,6 +130,37 @@ fn print_robots_grid(robots: &Vec<Robot>) {
     print!("{}", output);
 }
 
+fn create_image_for_state(step: i32, robots: &Vec<Robot>) {
+    let height: u32 = BATHROOM_HEIGHT.try_into().unwrap();
+    let width: u32 = BATHROOM_WIDTH.try_into().unwrap();
+
+    let mut image = RgbImage::new(height, width);
+    for y in 0..width {
+        for x in 0..height {
+            let robot_count = get_robot_count_in_range(
+                Vec2 {
+                    x: x.try_into().unwrap(),
+                    y: y.try_into().unwrap(),
+                },
+                Vec2 {
+                    x: x.try_into().unwrap(),
+                    y: y.try_into().unwrap(),
+                },
+                &robots,
+            );
+            if robot_count > 0 {
+                image.put_pixel(x, y, Rgb([255, 255, 255]));
+            } else {
+                image.put_pixel(x, y, Rgb([0, 0, 0]));
+            }
+        }
+    }
+
+    let file_name = format!("state_{}.png", step);
+
+    image.save(file_name).unwrap();
+}
+
 fn get_robot_count_in_range(min: Vec2, max: Vec2, robots: &Vec<Robot>) -> i32 {
     robots.into_iter().fold(0, |sum, robot| {
         let in_horizontal_range = min.x <= robot.position.x && robot.position.x <= max.x;
@@ -166,9 +198,7 @@ fn main() {
     for s in 0..SIMULATION_DURATION {
         robots = update_robots(&robots);
         println!("\nAfter {} seconds:", s + 1);
-        if s > 100 {
-            print_robots_grid(&robots);
-        }
+        create_image_for_state(s, &robots);
     }
 
     let q0 = get_robot_count_in_range(
