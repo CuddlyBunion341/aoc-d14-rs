@@ -1,3 +1,4 @@
+use core::fmt;
 use std::fs;
 
 // const BATHROOM_WIDTH: i32 = 101;
@@ -6,7 +7,7 @@ use std::fs;
 const INPUT_FILE_PATH: &str = "./input";
 const BATHROOM_WIDTH: i32 = 11;
 const BATHROOM_HEIGHT: i32 = 7;
-const SIMULATIION_DURATION: i32 = 100;
+const SIMULATION_DURATION: i32 = 100;
 
 #[derive(Debug, Clone)]
 struct Vec2 {
@@ -18,6 +19,18 @@ struct Vec2 {
 struct Robot {
     position: Vec2,
     velocity: Vec2,
+}
+
+impl fmt::Display for Vec2 {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "({}, {})", self.x, self.y)
+    }
+}
+
+impl fmt::Display for Robot {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Pos: {}, Vel: {}", self.position, self.velocity)
+    }
 }
 
 fn extract_value(string: &str) -> Vec2 {
@@ -37,7 +50,7 @@ fn extract_value(string: &str) -> Vec2 {
 
 fn wrap_value(a: i32, b: i32, threshold: i32) -> i32 {
     let c = a + b;
-    if c > threshold {
+    if c >= threshold {
         c - threshold
     } else if c < 0 {
         c + threshold
@@ -87,7 +100,13 @@ fn is_between_quadrants(point: &Vec2) -> bool {
     point.x == BATHROOM_WIDTH / 2 || point.y == BATHROOM_HEIGHT / 2
 }
 
-fn print_robots(robots: &Vec<Robot>) {
+fn print_robot_values(robots: &Vec<Robot>) {
+    robots.into_iter().for_each(|robot| {
+        println!("{}", robot);
+    });
+}
+
+fn print_robots_grid(robots: &Vec<Robot>) {
     for y in 0..BATHROOM_HEIGHT {
         for x in 0..BATHROOM_WIDTH {
             if is_between_quadrants(&Vec2 {x,y}) {
@@ -139,18 +158,21 @@ fn main() {
         });
 
     println!("Initial state:");
-    print_robots(&robots);
+    print_robots_grid(&robots);
 
-    for s in 0..SIMULATIION_DURATION {
+    for s in 0..SIMULATION_DURATION {
         robots = update_robots(&robots);
         println!("\nAfter {} seconds:", s + 1);
-        print_robots(&robots);
+        print_robots_grid(&robots);
     }
 
     let q0 = get_robot_count_in_range(Vec2 { x: 0, y: 0 }, Vec2 {x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2}, &robots);
     let q1 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: 0 }, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT  / 2}, &robots);
     let q2 = get_robot_count_in_range(Vec2 { x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT / 2 }, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT}, &robots);
     let q3 = get_robot_count_in_range(Vec2 { x: 0, y: BATHROOM_HEIGHT / 2 }, Vec2 {x: BATHROOM_WIDTH / 2, y: BATHROOM_HEIGHT}, &robots);
+
+    println!("");
+    print_robot_values(&robots);
 
     println!("\nTotal: {} from {}", get_robot_count_in_range(Vec2 {x: 0, y: 0,}, Vec2 {x: BATHROOM_WIDTH, y: BATHROOM_HEIGHT}, &robots), robots.len());
 
